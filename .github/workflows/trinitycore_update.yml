@@ -1,0 +1,78 @@
+name: Sync New Commits
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync-commits:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout your repository
+        uses: actions/checkout@v2
+        with:
+          repository: masterking32/TrinityCore
+          
+      - name: Get TrinityCore and create patch from last commits.
+        id: get-commits
+        run: |
+          cd ..
+          mkdir TrinityCore_3.3.5
+          cd TrinityCore_3.3.5
+          git clone https://github.com/TrinityCore/TrinityCore -b 3.3.5
+          cd TrinityCore
+          git log --pretty=format:"%H" --since="2 days ago" > new_commits.txt
+          
+          if [ ! -d "merge_temp" ]; then
+            mkdir merge_temp
+          fi
+          
+          mapfile -t commits < new_commits.txt
+          for commit in "${commits[@]}"; do
+            if [ ! -f "/home/runner/work/TrinityCore/TrinityCore/merged_commits/$commit.txt" ]; then
+              git format-patch -1 --stdout $commit > merge_temp/$commit.patch
+            fi
+          done
+          ls ./merge_temp
+          cd ../../TrinityCore
+      
+      - name: Run while loop
+        run: |
+          git config --global user.name masterking32
+          git config --global user.email lichwow_masterking@yahoo.com
+          
+          cd /home/runner/work/TrinityCore/TrinityCore/
+          if [ ! -d "merged_commits" ]; then
+            mkdir merged_commits
+          fi
+          mapfile -t commits < /home/runner/work/TrinityCore/TrinityCore_3.3.5/TrinityCore/new_commits.txt
+
+          commits=("${commits[@]}")
+          for ((i=${#commits[@]}-1; i>=0; i--)); do
+            commit="${commits[i]}"
+            if [ ! -f "merged_commits/$commit.txt" ]; then
+              if [ ! -f "/home/runner/work/TrinityCore/TrinityCore_3.3.5/TrinityCore/merge_temp/$commit.patch" ]; then
+                echo "Diff file for commit $commit does not exist. Skipping..."
+                continue
+              fi
+              
+              if [ ! -s "/home/runner/work/TrinityCore/TrinityCore_3.3.5/TrinityCore/merge_temp/$commit.patch" ]; then
+                echo "Patch file for commit $commit is empty. Skipping..."
+                continue
+              fi
+
+              git am --committer-date-is-author-date < "/home/runner/work/TrinityCore/TrinityCore_3.3.5/TrinityCore/merge_temp/$commit.patch"
+              touch "merged_commits/$commit.txt"
+              git add "merged_commits/$commit.txt"
+              git commit -m "Added merged_commits (https://github.com/TrinityCore/TrinityCore/commit/$commit)"
+            else
+              echo "File for commit $commit already exists. Skipping..."
+            fi
+          done
+          
+      - name: Push changes
+        run: git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_TOKEN }}
