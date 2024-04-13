@@ -23,7 +23,7 @@ jobs:
           cd TrinityCore_3.3.5
           git clone https://github.com/TrinityCore/TrinityCore -b 3.3.5
           cd TrinityCore
-          git log --pretty=format:"%H" --since="2 days ago" > new_commits.txt
+          git log --pretty=format:"%H" --since="5 days ago" > new_commits.txt
           
           if [ ! -d "merge_temp" ]; then
             mkdir merge_temp
