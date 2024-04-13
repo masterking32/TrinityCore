@@ -71,8 +71,11 @@ jobs:
               echo "File for commit $commit already exists. Skipping..."
             fi
           done
-          
-      - name: Push changes
-        run: git push
+          git push https://masterking32:${GITHUB_TOKEN}@github.com/masterking32/TrinityCore.git
         env:
           GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_TOKEN }}
+
+#      - name: Push changes
+#        run: git push
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_TOKEN }}
