@@ -71,7 +71,8 @@ jobs:
               echo "File for commit $commit already exists. Skipping..."
             fi
           done
-          git push https://masterking32:${GITHUB_TOKEN}@github.com/masterking32/TrinityCore.git
+          git remote add origin_tmp https://${GITHUB_TOKEN}@github.com/masterking32/TrinityCore
+          git push origin_tmp
         env:
           GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_TOKEN }}
 
